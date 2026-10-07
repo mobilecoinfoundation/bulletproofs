@@ -120,7 +120,7 @@ let bp_gens = BulletproofGens::new(64, 1);
 let secret_value = 1037578891u64;
 
 // The API takes a blinding factor for the commitment.
-let blinding = Scalar::random(&mut thread_rng());
+let blinding = Scalar::from(42u64);
 
 // The proof can be chained to an existing transcript.
 // Here we create a transcript with a doctest domain separator.

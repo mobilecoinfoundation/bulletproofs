@@ -1,7 +1,11 @@
 #![allow(non_snake_case)]
+mod common;
+
 #[macro_use]
 extern crate criterion;
 use criterion::Criterion;
+
+use common::random_scalar;
 
 use rand;
 use rand::Rng;
@@ -27,7 +31,7 @@ fn create_aggregated_rangeproof_helper(n: usize, c: &mut Criterion) {
 
             let (min, max) = (0u64, ((1u128 << n) - 1) as u64);
             let values: Vec<u64> = (0..m).map(|_| rng.gen_range(min..max)).collect();
-            let blindings: Vec<Scalar> = (0..m).map(|_| Scalar::random(&mut rng)).collect();
+            let blindings: Vec<Scalar> = (0..m).map(|_| random_scalar(&mut rng)).collect();
 
             b.iter(|| {
                 // Each proof creation requires a clean transcript.
@@ -75,7 +79,7 @@ fn verify_aggregated_rangeproof_helper(n: usize, c: &mut Criterion) {
 
             let (min, max) = (0u64, ((1u128 << n) - 1) as u64);
             let values: Vec<u64> = (0..m).map(|_| rng.gen_range(min..max)).collect();
-            let blindings: Vec<Scalar> = (0..m).map(|_| Scalar::random(&mut rng)).collect();
+            let blindings: Vec<Scalar> = (0..m).map(|_| random_scalar(&mut rng)).collect();
 
             let mut transcript = Transcript::new(b"AggregateRangeProofBenchmark");
             let (proof, value_commitments) = RangeProof::prove_multiple(

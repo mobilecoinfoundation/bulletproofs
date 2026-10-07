@@ -1,8 +1,9 @@
+mod common;
+
+use common::random_scalar;
 use rand_chacha::ChaChaRng;
 
 use curve25519_dalek::ristretto::CompressedRistretto;
-use curve25519_dalek::scalar::Scalar;
-
 use merlin::Transcript;
 
 use bulletproofs_og::{BulletproofGens, PedersenGens, RangeProof};
@@ -98,6 +99,38 @@ fn deserialize_and_verify() {
     }
 }
 
+// This fixture was generated from commit 9abfdc054d9ba65f1e185ea1e6eff3947ce879dc,
+// before the curve25519-dalek 5 upgrade, using the fixed inputs and RNG below.
+// Keeping the generator in the test makes changes to proof bytes, transcript
+// handling, or RNG consumption visible.
+#[test]
+fn deterministic_pre_curve5_proof_is_unchanged() {
+    use rand_chacha::rand_core::SeedableRng;
+
+    let expected_proof = hex::decode(
+        "f429335a9b504e347ac19fa69679a3de94016ce380b5e849e045c79a9c478c4394b6c7ce09538109ec4a143c922889ba8b5615ce7909034f26b155721052af5774bee4e189e70b48e970fb4e9e1af161a09206e9408eed0b95fc27d8aa8f8037b0f5fc2618c1800d4a5d4b1511e12af8a46cb947be82f9cb74bccf2216de9233d1563572670eb04a2e2dea657582487e1b411b4d1c5863873d29fbba9da1e502b2989c0269563deedeac65d712a795626ba2af330e60df89b1e7e8e6e31746056dc4ea2c870771fd88b5baa9ddd35b2656aca5f7a476fe22cd4a584d3ff12a0d1e95e0015af9887bc37b44f5af8beef582a6d7a00e372f5e40f91ee9c826ba35b05bf60954e893d64f0bbda7a89527a3124647e51e9fe4795ee1cc7dc77f5c323271aa944c5c3504ff304ff7040ccba6c1b2f8ec31f90dda191bc4cb1728cf38906baa23f10abc9e7a74cf5986a0d630e986df5cb2ff6898137513e3f5e8a3446ca6f80bb9839562f87a5a038b682ea3ba58e02391337e8dce7e6a4e1db2f831905b8a30ba78f3581e9f48478818548cbe0d39bb1e28aeaa4a494ccccc290c19467da90f4ce9cc955e6a6fcbc87a192a44fd82537ce785d3be46f36489dee83b582e508008168a49f9fd63cccd52eb71b24bfbfa97053275e19d1e729f2e9d1250033a700eb2df016208082c449f1717be1a93be387ebad9cf29364a7eb5f86c4298dfda749b58c7cef5afa48cc7da5316b3799ccebafef09f54e9a1837ff0200d293e1148335130c67e02272d9d9d876fa80696a87a1f2defdcfb204dc661052e9252ce0af7813aeaaffbd7f74928e17b909d65e4eeb633effbce5b0243d30c",
+    )
+    .unwrap();
+    let expected_commitment =
+        hex::decode("7883c050e70c079ffdf455488e70673d375bb53204cdd452c78829f99ed4e60c").unwrap();
+
+    let mut rng = ChaChaRng::from_seed([7u8; 32]);
+    let mut transcript = Transcript::new(b"curve25519-dalek-5 compatibility");
+    let (proof, commitment) = RangeProof::prove_single_with_rng(
+        &BulletproofGens::new(32, 1),
+        &PedersenGens::default(),
+        &mut transcript,
+        123_456_789,
+        &curve25519_dalek::scalar::Scalar::from(42u64),
+        32,
+        &mut rng,
+    )
+    .unwrap();
+
+    assert_eq!(proof.to_bytes(), expected_proof);
+    assert_eq!(commitment.as_bytes(), expected_commitment.as_slice());
+}
+
 // This function generates test vectors and dumps them to stdout.
 // It can be run by uncommenting the #[test] annotation.
 // We allow(dead_code) to ensure that it continues to compile.
@@ -114,7 +147,7 @@ fn generate_test_vectors() {
 
     let values = vec![0u64, 1, 2, 3, 4, 5, 6, 7];
     let blindings = (0..8)
-        .map(|_| Scalar::random(&mut test_rng))
+        .map(|_| random_scalar(&mut test_rng))
         .collect::<Vec<_>>();
 
     for n in &[8, 16, 32, 64] {

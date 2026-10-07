@@ -22,6 +22,7 @@ use crate::generators::{BulletproofGens, PedersenGens};
 use crate::inner_product_proof::InnerProductProof;
 use crate::transcript::TranscriptProtocol;
 use crate::util;
+use crate::util::random_scalar;
 
 use rand_core::{CryptoRng, RngCore};
 use serde::de::Visitor;
@@ -83,9 +84,6 @@ impl RangeProof {
     ///
     /// # Example
     /// ```
-    /// extern crate rand;
-    /// use rand::thread_rng;
-    ///
     /// extern crate curve25519_dalek;
     /// use curve25519_dalek::scalar::Scalar;
     ///
@@ -108,7 +106,7 @@ impl RangeProof {
     /// let secret_value = 1037578891u64;
     ///
     /// // The API takes a blinding factor for the commitment.
-    /// let blinding = Scalar::random(&mut thread_rng());
+    /// let blinding = Scalar::from(42u64);
     ///
     /// // The proof can be chained to an existing transcript.
     /// // Here we create a transcript with a doctest domain separator.
@@ -182,9 +180,6 @@ impl RangeProof {
     ///
     /// # Example
     /// ```
-    /// extern crate rand;
-    /// use rand::thread_rng;
-    ///
     /// extern crate curve25519_dalek;
     /// use curve25519_dalek::scalar::Scalar;
     ///
@@ -207,7 +202,7 @@ impl RangeProof {
     /// let secrets = [4242344947u64, 3718732727u64, 2255562556u64, 2526146994u64];
     ///
     /// // The API takes blinding factors for the commitments.
-    /// let blindings: Vec<_> = (0..4).map(|_| Scalar::random(&mut thread_rng())).collect();
+    /// let blindings: Vec<_> = (1u64..=4).map(Scalar::from).collect();
     ///
     /// // The proof can be chained to an existing transcript.
     /// // Here we create a transcript with a doctest domain separator.
@@ -394,7 +389,7 @@ impl RangeProof {
         let w = transcript.challenge_scalar(b"w");
 
         // Challenge value for batching statements to be verified
-        let c = Scalar::random(rng);
+        let c = random_scalar(rng);
 
         let (x_sq, x_inv_sq, s) = self.ipp_proof.verification_scalars(n * m, transcript)?;
         let s_inv = s.iter().rev();
@@ -603,8 +598,8 @@ mod tests {
     #[test]
     fn test_delta() {
         let mut rng = rand::thread_rng();
-        let y = Scalar::random(&mut rng);
-        let z = Scalar::random(&mut rng);
+        let y = random_scalar(&mut rng);
+        let z = random_scalar(&mut rng);
 
         // Choose n = 256 to ensure we overflow the group order during
         // the computation, to check that that's done correctly
@@ -653,7 +648,7 @@ mod tests {
             // 0. Create witness data
             let (min, max) = (0u64, ((1u128 << n) - 1) as u64);
             let values: Vec<u64> = (0..m).map(|_| rng.gen_range(min..max)).collect();
-            let blindings: Vec<Scalar> = (0..m).map(|_| Scalar::random(&mut rng)).collect();
+            let blindings: Vec<Scalar> = (0..m).map(|_| random_scalar(&mut rng)).collect();
 
             // 1. Create the proof
             let mut transcript = Transcript::new(b"AggregatedRangeProofTest");
@@ -745,20 +740,20 @@ mod tests {
 
         // Parties 0, 2 are honest and use a 32-bit value
         let v0 = rng.gen::<u32>() as u64;
-        let v0_blinding = Scalar::random(&mut rng);
+        let v0_blinding = random_scalar(&mut rng);
         let party0 = Party::new(&bp_gens, &pc_gens, v0, v0_blinding, n).unwrap();
 
         let v2 = rng.gen::<u32>() as u64;
-        let v2_blinding = Scalar::random(&mut rng);
+        let v2_blinding = random_scalar(&mut rng);
         let party2 = Party::new(&bp_gens, &pc_gens, v2, v2_blinding, n).unwrap();
 
         // Parties 1, 3 are dishonest and use a 64-bit value
         let v1 = rng.gen::<u64>();
-        let v1_blinding = Scalar::random(&mut rng);
+        let v1_blinding = random_scalar(&mut rng);
         let party1 = Party::new(&bp_gens, &pc_gens, v1, v1_blinding, n).unwrap();
 
         let v3 = rng.gen::<u64>();
-        let v3_blinding = Scalar::random(&mut rng);
+        let v3_blinding = random_scalar(&mut rng);
         let party3 = Party::new(&bp_gens, &pc_gens, v3, v3_blinding, n).unwrap();
 
         let dealer = Dealer::new(&bp_gens, &pc_gens, &mut transcript, n, m).unwrap();
@@ -817,7 +812,7 @@ mod tests {
         let mut transcript = Transcript::new(b"AggregatedRangeProofTest");
 
         let v0 = rng.gen::<u32>() as u64;
-        let v0_blinding = Scalar::random(&mut rng);
+        let v0_blinding = random_scalar(&mut rng);
         let party0 = Party::new(&bp_gens, &pc_gens, v0, v0_blinding, n).unwrap();
 
         let dealer = Dealer::new(&bp_gens, &pc_gens, &mut transcript, n, m).unwrap();

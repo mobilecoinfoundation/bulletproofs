@@ -214,19 +214,18 @@ impl ShuffleProof {
 
         let mut prover = Prover::new(&pc_gens, transcript);
 
-        // Construct blinding factors using an RNG.
+        // Construct example blinding factors.
         // Note: a non-example implementation would want to operate on existing commitments.
-        let mut blinding_rng = rand::thread_rng();
 
         let (input_commitments, input_vars): (Vec<_>, Vec<_>) = input.into_iter()
             .map(|v| {
-                prover.commit(*v, Scalar::random(&mut blinding_rng))
+                prover.commit(*v, Scalar::from(42u64))
             })
             .unzip();
 
         let (output_commitments, output_vars): (Vec<_>, Vec<_>) = output.into_iter()
             .map(|v| {
-                prover.commit(*v, Scalar::random(&mut blinding_rng))
+                prover.commit(*v, Scalar::from(42u64))
             })
             .unzip();
 
@@ -321,19 +320,18 @@ The verifier receives a proof, and a list of committed inputs and outputs, from 
 # 
 #         let mut prover = Prover::new(&pc_gens, transcript);
 # 
-#         // Construct blinding factors using an RNG.
+#         // Construct example blinding factors.
 #         // Note: a non-example implementation would want to operate on existing commitments.
-#         let mut blinding_rng = rand::thread_rng();
 # 
 #         let (input_commitments, input_vars): (Vec<_>, Vec<_>) = input.into_iter()
 #             .map(|v| {
-#                 prover.commit(*v, Scalar::random(&mut blinding_rng))
+#                 prover.commit(*v, Scalar::from(42u64))
 #             })
 #             .unzip();
 # 
 #         let (output_commitments, output_vars): (Vec<_>, Vec<_>) = output.into_iter()
 #             .map(|v| {
-#                 prover.commit(*v, Scalar::random(&mut blinding_rng))
+#                 prover.commit(*v, Scalar::from(42u64))
 #             })
 #             .unzip();
 #
@@ -461,19 +459,18 @@ Because only the prover knows the scalar values of the inputs and outputs, and t
 # 
 #         let mut prover = Prover::new(&pc_gens, transcript);
 # 
-#         // Construct blinding factors using an RNG.
+#         // Construct example blinding factors.
 #         // Note: a non-example implementation would want to operate on existing commitments.
-#         let mut blinding_rng = rand::thread_rng();
 # 
 #         let (input_commitments, input_vars): (Vec<_>, Vec<_>) = input.into_iter()
 #             .map(|v| {
-#                 prover.commit(*v, Scalar::random(&mut blinding_rng))
+#                 prover.commit(*v, Scalar::from(42u64))
 #             })
 #             .unzip();
 # 
 #         let (output_commitments, output_vars): (Vec<_>, Vec<_>) = output.into_iter()
 #             .map(|v| {
-#                 prover.commit(*v, Scalar::random(&mut blinding_rng))
+#                 prover.commit(*v, Scalar::from(42u64))
 #             })
 #             .unzip();
 #
