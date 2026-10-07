@@ -84,6 +84,9 @@ impl RangeProof {
     ///
     /// # Example
     /// ```
+    /// extern crate rand;
+    /// use rand::{thread_rng, CryptoRng, RngCore};
+    ///
     /// extern crate curve25519_dalek;
     /// use curve25519_dalek::scalar::Scalar;
     ///
@@ -93,6 +96,12 @@ impl RangeProof {
     /// extern crate bulletproofs_og;
     /// use bulletproofs_og::{BulletproofGens, PedersenGens, RangeProof};
     ///
+    /// # fn random_scalar<R: RngCore + CryptoRng>(rng: &mut R) -> Scalar {
+    /// #     let mut bytes = [0u8; 64];
+    /// #     rng.fill_bytes(&mut bytes);
+    /// #     Scalar::from_bytes_mod_order_wide(&bytes)
+    /// # }
+    /// #
     /// # fn main() {
     /// // Generators for Pedersen commitments.  These can be selected
     /// // independently of the Bulletproofs generators.
@@ -106,7 +115,7 @@ impl RangeProof {
     /// let secret_value = 1037578891u64;
     ///
     /// // The API takes a blinding factor for the commitment.
-    /// let blinding = Scalar::from(42u64);
+    /// let blinding = random_scalar(&mut thread_rng());
     ///
     /// // The proof can be chained to an existing transcript.
     /// // Here we create a transcript with a doctest domain separator.
@@ -180,6 +189,9 @@ impl RangeProof {
     ///
     /// # Example
     /// ```
+    /// extern crate rand;
+    /// use rand::{thread_rng, CryptoRng, RngCore};
+    ///
     /// extern crate curve25519_dalek;
     /// use curve25519_dalek::scalar::Scalar;
     ///
@@ -189,6 +201,12 @@ impl RangeProof {
     /// extern crate bulletproofs_og;
     /// use bulletproofs_og::{BulletproofGens, PedersenGens, RangeProof};
     ///
+    /// # fn random_scalar<R: RngCore + CryptoRng>(rng: &mut R) -> Scalar {
+    /// #     let mut bytes = [0u8; 64];
+    /// #     rng.fill_bytes(&mut bytes);
+    /// #     Scalar::from_bytes_mod_order_wide(&bytes)
+    /// # }
+    /// #
     /// # fn main() {
     /// // Generators for Pedersen commitments.  These can be selected
     /// // independently of the Bulletproofs generators.
@@ -202,7 +220,8 @@ impl RangeProof {
     /// let secrets = [4242344947u64, 3718732727u64, 2255562556u64, 2526146994u64];
     ///
     /// // The API takes blinding factors for the commitments.
-    /// let blindings: Vec<_> = (1u64..=4).map(Scalar::from).collect();
+    /// let mut rng = thread_rng();
+    /// let blindings: Vec<_> = (0..4).map(|_| random_scalar(&mut rng)).collect();
     ///
     /// // The proof can be chained to an existing transcript.
     /// // Here we create a transcript with a doctest domain separator.
