@@ -15,11 +15,14 @@ use criterion::Criterion;
 
 extern crate bulletproofs_og;
 extern crate curve25519_dalek;
+
+mod common;
 extern crate merlin;
 extern crate rand;
 
 use bulletproofs_og::r1cs::*;
 use bulletproofs_og::{BulletproofGens, PedersenGens};
+use common::random_scalar;
 use curve25519_dalek::ristretto::CompressedRistretto;
 use curve25519_dalek::scalar::Scalar;
 use merlin::Transcript;
@@ -106,12 +109,12 @@ impl ShuffleProof {
 
         let (input_commitments, input_vars): (Vec<_>, Vec<_>) = input
             .into_iter()
-            .map(|v| prover.commit(*v, Scalar::random(&mut blinding_rng)))
+            .map(|v| prover.commit(*v, random_scalar(&mut blinding_rng)))
             .unzip();
 
         let (output_commitments, output_vars): (Vec<_>, Vec<_>) = output
             .into_iter()
-            .map(|v| prover.commit(*v, Scalar::random(&mut blinding_rng)))
+            .map(|v| prover.commit(*v, random_scalar(&mut blinding_rng)))
             .unzip();
 
         ShuffleProof::gadget(&mut prover, input_vars, output_vars)?;

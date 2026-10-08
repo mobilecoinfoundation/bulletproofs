@@ -14,6 +14,7 @@ use rand_core::{CryptoRng, RngCore};
 use crate::errors::ProofError;
 use crate::inner_product_proof::inner_product;
 use crate::transcript::TranscriptProtocol;
+use crate::util::random_scalar;
 
 /// A linear proof, which is an "lightweight" version of a Bulletproofs inner-product proof
 /// Protocol: Section E.3 of [GHL'21](https://eprint.iacr.org/2021/1397.pdf)
@@ -100,8 +101,8 @@ impl LinearProof {
             let c_L = inner_product(&a_L, &b_R);
             let c_R = inner_product(&a_R, &b_L);
 
-            let s_j = Scalar::random(rng);
-            let t_j = Scalar::random(rng);
+            let s_j = random_scalar(rng);
+            let t_j = random_scalar(rng);
 
             // L = a_L * G_R + s_j * B + c_L * F
             let L = RistrettoPoint::vartime_multiscalar_mul(
@@ -132,10 +133,8 @@ impl LinearProof {
                 // b_L = b_L + x_j * b_R
                 b_L[i] = b_L[i] + x_j * b_R[i];
                 // G_L = G_L + x_j * G_R
-                G_L[i] = RistrettoPoint::vartime_multiscalar_mul(
-                    &[Scalar::one(), x_j],
-                    &[G_L[i], G_R[i]],
-                );
+                G_L[i] =
+                    RistrettoPoint::vartime_multiscalar_mul(&[Scalar::ONE, x_j], &[G_L[i], G_R[i]]);
             }
             a = a_L;
             b = b_L;
@@ -143,8 +142,8 @@ impl LinearProof {
             r = r + x_j * s_j + x_j_inv * t_j;
         }
 
-        let s_star = Scalar::random(rng);
-        let t_star = Scalar::random(rng);
+        let s_star = random_scalar(rng);
+        let t_star = random_scalar(rng);
         let S = (t_star * B + s_star * b[0] * F + s_star * G[0]).compress();
         transcript.append_point(b"S", &S);
 
@@ -284,7 +283,7 @@ impl LinearProof {
 
         // 3. Compute the challenge inverses: 1/x_k, ..., 1/x_1
         let mut challenges_inv = challenges.clone();
-        Scalar::batch_invert(&mut challenges_inv);
+        Scalar::invert_batch_alloc(&mut challenges_inv);
 
         Ok((challenges, challenges_inv, b[0]))
     }
@@ -300,7 +299,7 @@ impl LinearProof {
         let lg_n = self.L_vec.len();
 
         let mut s = Vec::with_capacity(n);
-        s.push(Scalar::one());
+        s.push(Scalar::ONE);
         for i in 1..n {
             let lg_i = (32 - 1 - (i as u32).leading_zeros()) as usize;
             let k = 1 << lg_i;
@@ -391,10 +390,10 @@ impl LinearProof {
 
         let pos = 2 * lg_n * 32;
         let S = CompressedRistretto(read32(&slice[pos..]));
-        let a = Scalar::from_canonical_bytes(read32(&slice[pos + 32..]))
-            .ok_or(ProofError::FormatError)?;
-        let r = Scalar::from_canonical_bytes(read32(&slice[pos + 64..]))
-            .ok_or(ProofError::FormatError)?;
+        let a = Scalar::from_canonical_bytes(read32(&slice[pos + 32..]));
+        let a = Option::from(a).ok_or(ProofError::FormatError)?;
+        let r = Scalar::from_canonical_bytes(read32(&slice[pos + 64..]));
+        let r = Option::from(r).ok_or(ProofError::FormatError)?;
 
         Ok(LinearProof {
             L_vec,
@@ -423,13 +422,13 @@ mod tests {
 
         // a and b are the vectors for which we want to prove c = <a,b>
         // a is a private vector, b is a public vector
-        let a: Vec<_> = (0..n).map(|_| Scalar::random(&mut rng)).collect();
-        let b: Vec<_> = (0..n).map(|_| Scalar::random(&mut rng)).collect();
+        let a: Vec<_> = (0..n).map(|_| random_scalar(&mut rng)).collect();
+        let b: Vec<_> = (0..n).map(|_| random_scalar(&mut rng)).collect();
 
         let mut prover_transcript = Transcript::new(b"linearprooftest");
 
         // C = <a, G> + r * B + <a, b> * F
-        let r = Scalar::random(&mut rng);
+        let r = random_scalar(&mut rng);
         let c = inner_product(&a, &b);
         let C = RistrettoPoint::vartime_multiscalar_mul(
             a.iter().chain(iter::once(&r)).chain(iter::once(&c)),

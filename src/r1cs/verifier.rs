@@ -378,6 +378,7 @@ impl<T: BorrowMut<Transcript>> Verifier<T> {
 
         use crate::inner_product_proof::inner_product;
         use crate::util;
+        use crate::util::random_scalar;
         use std::iter;
 
         if bp_gens.gens_capacity < padded_n {
@@ -464,7 +465,7 @@ impl<T: BorrowMut<Transcript>> Verifier<T> {
             .borrow_mut()
             .build_rng()
             .finalize(&mut thread_rng());
-        let r = Scalar::random(&mut rng);
+        let r = random_scalar(&mut rng);
 
         let xx = x * x;
         let rxx = r * xx;

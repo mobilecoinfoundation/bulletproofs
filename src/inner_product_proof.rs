@@ -224,7 +224,7 @@ impl InnerProductProof {
         // 2. Compute 1/(u_k...u_1) and 1/u_k, ..., 1/u_1
 
         let mut challenges_inv = challenges.clone();
-        let allinv = Scalar::batch_invert(&mut challenges_inv);
+        let allinv = Scalar::invert_batch_alloc(&mut challenges_inv);
 
         // 3. Compute u_i^2 and (1/u_i)^2
 
@@ -429,7 +429,7 @@ pub fn inner_product(a: &[Scalar], b: &[Scalar]) -> Scalar {
 mod tests {
     use super::*;
 
-    use crate::util;
+    use crate::util::{self, random_scalar};
     use sha3::Sha3_512;
 
     fn test_helper_create(n: usize) {
@@ -444,14 +444,14 @@ mod tests {
         let Q = RistrettoPoint::hash_from_bytes::<Sha3_512>(b"test point");
 
         // a and b are the vectors for which we want to prove c = <a,b>
-        let a: Vec<_> = (0..n).map(|_| Scalar::random(&mut rng)).collect();
-        let b: Vec<_> = (0..n).map(|_| Scalar::random(&mut rng)).collect();
+        let a: Vec<_> = (0..n).map(|_| random_scalar(&mut rng)).collect();
+        let b: Vec<_> = (0..n).map(|_| random_scalar(&mut rng)).collect();
         let c = inner_product(&a, &b);
 
         let G_factors: Vec<Scalar> = iter::repeat(Scalar::ONE).take(n).collect();
 
         // y_inv is (the inverse of) a random challenge
-        let y_inv = Scalar::random(&mut rng);
+        let y_inv = random_scalar(&mut rng);
         let H_factors: Vec<Scalar> = util::exp_iter(y_inv).take(n).collect();
 
         // P would be determined upstream, but we need a correct P to check the proof.

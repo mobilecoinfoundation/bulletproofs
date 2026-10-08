@@ -23,6 +23,7 @@ use rand_core::{CryptoRng, RngCore};
 use crate::errors::MPCError;
 use crate::generators::{BulletproofGens, PedersenGens};
 use crate::util;
+use crate::util::random_scalar;
 
 #[cfg(feature = "std")]
 use rand::thread_rng;
@@ -95,7 +96,7 @@ impl<'a> PartyAwaitingPosition<'a> {
 
         let bp_share = self.bp_gens.share(j);
 
-        let a_blinding = Scalar::random(rng);
+        let a_blinding = random_scalar(rng);
         // Compute A = <a_L, G> + <a_R, H> + a_blinding * B_blinding
         let mut A = self.pc_gens.B_blinding * a_blinding;
 
@@ -111,9 +112,9 @@ impl<'a> PartyAwaitingPosition<'a> {
             i += 1;
         }
 
-        let s_blinding = Scalar::random(rng);
-        let s_L: Vec<Scalar> = (0..self.n).map(|_| Scalar::random(rng)).collect();
-        let s_R: Vec<Scalar> = (0..self.n).map(|_| Scalar::random(rng)).collect();
+        let s_blinding = random_scalar(rng);
+        let s_L: Vec<Scalar> = (0..self.n).map(|_| random_scalar(rng)).collect();
+        let s_R: Vec<Scalar> = (0..self.n).map(|_| random_scalar(rng)).collect();
 
         // Compute S = <s_L, G> + <s_R, H> + s_blinding * B_blinding
         let S = RistrettoPoint::multiscalar_mul(
@@ -211,8 +212,8 @@ impl<'a> PartyAwaitingBitChallenge<'a> {
         let t_poly = l_poly.inner_product(&r_poly);
 
         // Generate x by committing to T_1, T_2 (line 49-54)
-        let t_1_blinding = Scalar::random(rng);
-        let t_2_blinding = Scalar::random(rng);
+        let t_1_blinding = random_scalar(rng);
+        let t_2_blinding = random_scalar(rng);
         let T_1 = self.pc_gens.commit(t_poly.1, t_1_blinding);
         let T_2 = self.pc_gens.commit(t_poly.2, t_2_blinding);
 

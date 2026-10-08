@@ -1,11 +1,14 @@
 #![allow(non_snake_case)]
 
 extern crate curve25519_dalek;
+
+mod common;
 extern crate merlin;
 extern crate rand;
 
 use bulletproofs_og::r1cs::*;
 use bulletproofs_og::{BulletproofGens, PedersenGens};
+use common::random_scalar;
 use curve25519_dalek::ristretto::CompressedRistretto;
 use curve25519_dalek::scalar::Scalar;
 use merlin::Transcript;
@@ -92,12 +95,12 @@ impl ShuffleProof {
 
         let (input_commitments, input_vars): (Vec<_>, Vec<_>) = input
             .into_iter()
-            .map(|v| prover.commit(*v, Scalar::random(&mut blinding_rng)))
+            .map(|v| prover.commit(*v, random_scalar(&mut blinding_rng)))
             .unzip();
 
         let (output_commitments, output_vars): (Vec<_>, Vec<_>) = output
             .into_iter()
-            .map(|v| prover.commit(*v, Scalar::random(&mut blinding_rng)))
+            .map(|v| prover.commit(*v, random_scalar(&mut blinding_rng)))
             .unzip();
 
         ShuffleProof::gadget(&mut prover, input_vars, output_vars)?;
@@ -256,7 +259,7 @@ fn example_gadget_proof(
     // 2. Commit high-level variables
     let (commitments, vars): (Vec<_>, Vec<_>) = [a1, a2, b1, b2, c1]
         .into_iter()
-        .map(|x| prover.commit(Scalar::from(*x), Scalar::random(&mut thread_rng())))
+        .map(|x| prover.commit(Scalar::from(*x), random_scalar(&mut thread_rng())))
         .unzip();
 
     // 3. Build a CS
@@ -431,7 +434,7 @@ fn range_proof_helper(v_val: u64, n: usize) -> Result<(), R1CSError> {
 
         let mut prover = Prover::new(&pc_gens, &mut prover_transcript);
 
-        let (com, var) = prover.commit(v_val.into(), Scalar::random(&mut rng));
+        let (com, var) = prover.commit(v_val.into(), random_scalar(&mut rng));
         assert!(range_proof(&mut prover, var.into(), Some(v_val), n).is_ok());
 
         let proof = prover.prove(&bp_gens)?;
