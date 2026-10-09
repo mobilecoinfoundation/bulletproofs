@@ -20,12 +20,12 @@ use crate::inner_product_proof;
 use crate::range_proof::RangeProof;
 use crate::transcript::TranscriptProtocol;
 
-use rand_core::{CryptoRng, RngCore};
+use rand_core::CryptoRng;
 
 use crate::util;
 
 #[cfg(feature = "std")]
-use rand::thread_rng;
+use rand::rng;
 
 use super::messages::*;
 
@@ -300,7 +300,7 @@ impl<'a, 'b> DealerAwaitingProofShares<'a, 'b> {
     ///
     #[cfg(feature = "std")]
     pub fn receive_shares(self, proof_shares: &[ProofShare]) -> Result<RangeProof, MPCError> {
-        self.receive_shares_with_rng(proof_shares, &mut thread_rng())
+        self.receive_shares_with_rng(proof_shares, &mut rng())
     }
 
     /// Assemble the final aggregated [`RangeProof`] from the given
@@ -316,7 +316,7 @@ impl<'a, 'b> DealerAwaitingProofShares<'a, 'b> {
     /// performing local aggregation,
     /// [`receive_trusted_shares`](DealerAwaitingProofShares::receive_trusted_shares)
     /// saves time by skipping verification of the aggregated proof.
-    pub fn receive_shares_with_rng<T: RngCore + CryptoRng>(
+    pub fn receive_shares_with_rng<T: CryptoRng>(
         mut self,
         proof_shares: &[ProofShare],
         rng: &mut T,

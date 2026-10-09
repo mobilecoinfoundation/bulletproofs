@@ -406,7 +406,6 @@ impl<'g, T: BorrowMut<Transcript>> Prover<'g, T> {
         bp_gens: &BulletproofGens,
     ) -> Result<(R1CSProof, T), R1CSError> {
         use crate::util;
-        use crate::util::random_scalar;
         use std::iter;
 
         // Commit a length _suffix_ for the number of high-level variables.
@@ -438,8 +437,8 @@ impl<'g, T: BorrowMut<Transcript>> Prover<'g, T> {
                 builder = builder.rekey_with_witness_bytes(b"v_blinding", v_b.as_bytes());
             }
 
-            use rand::thread_rng;
-            builder.finalize(&mut thread_rng())
+            use rand::rng;
+            builder.finalize(&mut rng())
         };
 
         // Commit to the first-phase low-level witness variables.
@@ -452,12 +451,12 @@ impl<'g, T: BorrowMut<Transcript>> Prover<'g, T> {
         // We are performing a single-party circuit proof, so party index is 0.
         let gens = bp_gens.share(0);
 
-        let i_blinding1 = random_scalar(&mut rng);
-        let o_blinding1 = random_scalar(&mut rng);
-        let s_blinding1 = random_scalar(&mut rng);
+        let i_blinding1 = Scalar::random(&mut rng);
+        let o_blinding1 = Scalar::random(&mut rng);
+        let s_blinding1 = Scalar::random(&mut rng);
 
-        let mut s_L1: Vec<Scalar> = (0..n1).map(|_| random_scalar(&mut rng)).collect();
-        let mut s_R1: Vec<Scalar> = (0..n1).map(|_| random_scalar(&mut rng)).collect();
+        let mut s_L1: Vec<Scalar> = (0..n1).map(|_| Scalar::random(&mut rng)).collect();
+        let mut s_R1: Vec<Scalar> = (0..n1).map(|_| Scalar::random(&mut rng)).collect();
 
         // A_I = <a_L, G> + <a_R, H> + i_blinding * B_blinding
         let A_I1 = RistrettoPoint::multiscalar_mul(
@@ -514,16 +513,16 @@ impl<'g, T: BorrowMut<Transcript>> Prover<'g, T> {
 
         let (i_blinding2, o_blinding2, s_blinding2) = if has_2nd_phase_commitments {
             (
-                random_scalar(&mut rng),
-                random_scalar(&mut rng),
-                random_scalar(&mut rng),
+                Scalar::random(&mut rng),
+                Scalar::random(&mut rng),
+                Scalar::random(&mut rng),
             )
         } else {
             (Scalar::ZERO, Scalar::ZERO, Scalar::ZERO)
         };
 
-        let mut s_L2: Vec<Scalar> = (0..n2).map(|_| random_scalar(&mut rng)).collect();
-        let mut s_R2: Vec<Scalar> = (0..n2).map(|_| random_scalar(&mut rng)).collect();
+        let mut s_L2: Vec<Scalar> = (0..n2).map(|_| Scalar::random(&mut rng)).collect();
+        let mut s_R2: Vec<Scalar> = (0..n2).map(|_| Scalar::random(&mut rng)).collect();
 
         let (A_I2, A_O2, S2) = if has_2nd_phase_commitments {
             (
@@ -610,11 +609,11 @@ impl<'g, T: BorrowMut<Transcript>> Prover<'g, T> {
 
         let t_poly = util::VecPoly3::special_inner_product(&l_poly, &r_poly);
 
-        let t_1_blinding = random_scalar(&mut rng);
-        let t_3_blinding = random_scalar(&mut rng);
-        let t_4_blinding = random_scalar(&mut rng);
-        let t_5_blinding = random_scalar(&mut rng);
-        let t_6_blinding = random_scalar(&mut rng);
+        let t_1_blinding = Scalar::random(&mut rng);
+        let t_3_blinding = Scalar::random(&mut rng);
+        let t_4_blinding = Scalar::random(&mut rng);
+        let t_5_blinding = Scalar::random(&mut rng);
+        let t_6_blinding = Scalar::random(&mut rng);
 
         let T_1 = self.pc_gens.commit(t_poly.t1, t_1_blinding).compress();
         let T_3 = self.pc_gens.commit(t_poly.t3, t_3_blinding).compress();
