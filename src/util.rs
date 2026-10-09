@@ -7,15 +7,6 @@ use alloc::vec;
 use alloc::vec::Vec;
 use clear_on_drop::clear::Clear;
 use curve25519_dalek::scalar::Scalar;
-use rand_core::{CryptoRng, RngCore};
-
-/// Samples a scalar using the same algorithm and 64-byte RNG consumption as
-/// `curve25519-dalek` 4's `Scalar::random`.
-pub(crate) fn random_scalar<T: RngCore + CryptoRng>(rng: &mut T) -> Scalar {
-    let mut wide_bytes = [0u8; 64];
-    rng.fill_bytes(&mut wide_bytes);
-    Scalar::from_bytes_mod_order_wide(&wide_bytes)
-}
 
 use crate::inner_product_proof::inner_product;
 

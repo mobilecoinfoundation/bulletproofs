@@ -2,18 +2,16 @@
 
 extern crate curve25519_dalek;
 
-mod common;
 extern crate merlin;
 extern crate rand;
 
 use bulletproofs_og::r1cs::*;
 use bulletproofs_og::{BulletproofGens, PedersenGens};
-use common::random_scalar;
 use curve25519_dalek::ristretto::CompressedRistretto;
 use curve25519_dalek::scalar::Scalar;
 use merlin::Transcript;
+use rand::rng;
 use rand::seq::SliceRandom;
-use rand::thread_rng;
 
 // Shuffle gadget (documented in markdown file)
 
@@ -91,16 +89,16 @@ impl ShuffleProof {
 
         // Construct blinding factors using an RNG.
         // Note: a non-example implementation would want to operate on existing commitments.
-        let mut blinding_rng = rand::thread_rng();
+        let mut blinding_rng = rand::rng();
 
         let (input_commitments, input_vars): (Vec<_>, Vec<_>) = input
             .into_iter()
-            .map(|v| prover.commit(*v, random_scalar(&mut blinding_rng)))
+            .map(|v| prover.commit(*v, Scalar::random(&mut blinding_rng)))
             .unzip();
 
         let (output_commitments, output_vars): (Vec<_>, Vec<_>) = output
             .into_iter()
-            .map(|v| prover.commit(*v, random_scalar(&mut blinding_rng)))
+            .map(|v| prover.commit(*v, Scalar::random(&mut blinding_rng)))
             .unzip();
 
         ShuffleProof::gadget(&mut prover, input_vars, output_vars)?;
@@ -147,7 +145,7 @@ impl ShuffleProof {
 }
 
 fn kshuffle_helper(k: usize) {
-    use rand::Rng;
+    use rand::RngExt;
 
     // Common code
     let pc_gens = PedersenGens::default();
@@ -155,13 +153,13 @@ fn kshuffle_helper(k: usize) {
 
     let (proof, input_commitments, output_commitments) = {
         // Randomly generate inputs and outputs to kshuffle
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let (min, max) = (0u64, std::u64::MAX);
         let input: Vec<Scalar> = (0..k)
-            .map(|_| Scalar::from(rng.gen_range(min..max)))
+            .map(|_| Scalar::from(rng.random_range(min..max)))
             .collect();
         let mut output = input.clone();
-        output.shuffle(&mut rand::thread_rng());
+        output.shuffle(&mut rand::rng());
 
         let mut prover_transcript = Transcript::new(b"ShuffleProofTest");
         ShuffleProof::prove(&pc_gens, &bp_gens, &mut prover_transcript, &input, &output).unwrap()
@@ -259,7 +257,7 @@ fn example_gadget_proof(
     // 2. Commit high-level variables
     let (commitments, vars): (Vec<_>, Vec<_>) = [a1, a2, b1, b2, c1]
         .into_iter()
-        .map(|x| prover.commit(Scalar::from(*x), random_scalar(&mut thread_rng())))
+        .map(|x| prover.commit(Scalar::from(*x), Scalar::random(&mut rng())))
         .unzip();
 
     // 3. Build a CS
@@ -405,15 +403,15 @@ pub fn range_proof<CS: ConstraintSystem>(
 
 #[test]
 fn range_proof_gadget() {
-    use rand::thread_rng;
-    use rand::Rng;
+    use rand::rng;
+    use rand::RngExt;
 
-    let mut rng = thread_rng();
+    let mut rng = rng();
     let m = 3; // number of values to test per `n`
 
     for n in [2, 10, 32, 63].iter() {
         let (min, max) = (0u64, ((1u128 << n) - 1) as u64);
-        let values: Vec<u64> = (0..m).map(|_| rng.gen_range(min..max)).collect();
+        let values: Vec<u64> = (0..m).map(|_| rng.random_range(min..max)).collect();
         for v in values {
             assert!(range_proof_helper(v.into(), *n).is_ok());
         }
@@ -430,11 +428,11 @@ fn range_proof_helper(v_val: u64, n: usize) -> Result<(), R1CSError> {
     let (proof, commitment) = {
         // Prover makes a `ConstraintSystem` instance representing a range proof gadget
         let mut prover_transcript = Transcript::new(b"RangeProofTest");
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         let mut prover = Prover::new(&pc_gens, &mut prover_transcript);
 
-        let (com, var) = prover.commit(v_val.into(), random_scalar(&mut rng));
+        let (com, var) = prover.commit(v_val.into(), Scalar::random(&mut rng));
         assert!(range_proof(&mut prover, var.into(), Some(v_val), n).is_ok());
 
         let proof = prover.prove(&bp_gens)?;

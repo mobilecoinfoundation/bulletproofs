@@ -378,7 +378,6 @@ impl<T: BorrowMut<Transcript>> Verifier<T> {
 
         use crate::inner_product_proof::inner_product;
         use crate::util;
-        use crate::util::random_scalar;
         use std::iter;
 
         if bp_gens.gens_capacity < padded_n {
@@ -459,13 +458,13 @@ impl<T: BorrowMut<Transcript>> Verifier<T> {
         // Create a `TranscriptRng` from the transcript. The verifier
         // has no witness data to commit, so this just mixes external
         // randomness into the existing transcript.
-        use rand::thread_rng;
+        use rand::rng;
         let mut rng = self
             .transcript
             .borrow_mut()
             .build_rng()
-            .finalize(&mut thread_rng());
-        let r = random_scalar(&mut rng);
+            .finalize(&mut rng());
+        let r = Scalar::random(&mut rng);
 
         let xx = x * x;
         let rxx = r * xx;

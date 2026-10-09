@@ -1,9 +1,7 @@
-mod common;
-
-use common::random_scalar;
 use rand_chacha::ChaChaRng;
 
 use curve25519_dalek::ristretto::CompressedRistretto;
+use curve25519_dalek::scalar::Scalar;
 use merlin::Transcript;
 
 use bulletproofs_og::{BulletproofGens, PedersenGens, RangeProof};
@@ -147,7 +145,7 @@ fn generate_test_vectors() {
 
     let values = vec![0u64, 1, 2, 3, 4, 5, 6, 7];
     let blindings = (0..8)
-        .map(|_| random_scalar(&mut test_rng))
+        .map(|_| Scalar::random(&mut test_rng))
         .collect::<Vec<_>>();
 
     for n in &[8, 16, 32, 64] {
