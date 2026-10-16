@@ -7,7 +7,6 @@ use criterion::Criterion;
 extern crate bulletproofs_og as bulletproofs;
 extern crate curve25519_dalek;
 
-mod common;
 extern crate merlin;
 extern crate rand;
 
@@ -15,7 +14,6 @@ use core::iter;
 
 use bulletproofs::LinearProof;
 use bulletproofs::{BulletproofGens, PedersenGens};
-use common::random_scalar;
 use curve25519_dalek::ristretto::RistrettoPoint;
 use curve25519_dalek::scalar::Scalar;
 use curve25519_dalek::traits::VartimeMultiscalarMul;
@@ -28,7 +26,7 @@ fn create_linear_proof_helper(c: &mut Criterion) {
     c.bench_function_over_inputs(
         "linear proof creation",
         move |bench, n| {
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
 
             let bp_gens = BulletproofGens::new(*n, 1);
             // Calls `.G()` on generators, which should be a pub(crate) function only.
@@ -41,13 +39,13 @@ fn create_linear_proof_helper(c: &mut Criterion) {
             let B = pedersen_gens.B_blinding;
 
             // a and b are the vectors for which we want to prove c = <a,b>
-            let a: Vec<_> = (0..*n).map(|_| random_scalar(&mut rng)).collect();
-            let b: Vec<_> = (0..*n).map(|_| random_scalar(&mut rng)).collect();
+            let a: Vec<_> = (0..*n).map(|_| Scalar::random(&mut rng)).collect();
+            let b: Vec<_> = (0..*n).map(|_| Scalar::random(&mut rng)).collect();
 
             let mut transcript = Transcript::new(b"LinearProofBenchmark");
 
             // C = <a, G> + r * B + <a, b> * F
-            let r = random_scalar(&mut rng);
+            let r = Scalar::random(&mut rng);
             let c = inner_product(&a, &b);
             let C = RistrettoPoint::vartime_multiscalar_mul(
                 a.iter().chain(iter::once(&r)).chain(iter::once(&c)),
@@ -106,7 +104,7 @@ fn linear_verify(c: &mut Criterion) {
         "linear proof verification",
         move |bench, n| {
             let bp_gens = BulletproofGens::new(*n, 1);
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
 
             // Calls `.G()` on generators, which should be a pub(crate) function only.
             // For now, make that function public so it can be accessed from benches.
@@ -116,18 +114,18 @@ fn linear_verify(c: &mut Criterion) {
             let F = pedersen_gens.B;
             let B = pedersen_gens.B_blinding;
 
-            let b: Vec<_> = (0..*n).map(|_| random_scalar(&mut rng)).collect();
+            let b: Vec<_> = (0..*n).map(|_| Scalar::random(&mut rng)).collect();
 
             // Generate the proof in its own scope to prevent reuse of
             // prover variables by the verifier
             let (proof, C) = {
                 // a and b are the vectors for which we want to prove c = <a,b>
-                let a: Vec<_> = (0..*n).map(|_| random_scalar(&mut rng)).collect();
+                let a: Vec<_> = (0..*n).map(|_| Scalar::random(&mut rng)).collect();
 
                 let mut transcript = Transcript::new(b"LinearProofBenchmark");
 
                 // C = <a, G> + r * B + <a, b> * F
-                let r = random_scalar(&mut rng);
+                let r = Scalar::random(&mut rng);
                 let c = inner_product(&a, &b);
                 let C = RistrettoPoint::vartime_multiscalar_mul(
                     a.iter().chain(iter::once(&r)).chain(iter::once(&c)),

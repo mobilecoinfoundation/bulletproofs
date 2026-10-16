@@ -2,9 +2,9 @@ name: Rust
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ develop, mobilecoin ]
   pull_request:
-    branches: [ develop ]
+    branches: [ develop, mobilecoin ]
 
 jobs:
   check-stable:

@@ -9,12 +9,11 @@ use curve25519_dalek::ristretto::{CompressedRistretto, RistrettoPoint};
 use curve25519_dalek::scalar::Scalar;
 use curve25519_dalek::traits::VartimeMultiscalarMul;
 use merlin::Transcript;
-use rand_core::{CryptoRng, RngCore};
+use rand_core::CryptoRng;
 
 use crate::errors::ProofError;
 use crate::inner_product_proof::inner_product;
 use crate::transcript::TranscriptProtocol;
-use crate::util::random_scalar;
 
 /// A linear proof, which is an "lightweight" version of a Bulletproofs inner-product proof
 /// Protocol: Section E.3 of [GHL'21](https://eprint.iacr.org/2021/1397.pdf)
@@ -38,7 +37,7 @@ impl LinearProof {
     ///
     /// The lengths of the vectors must all be the same, and must all be either 0 or a power of 2.
     /// The proof is created with respect to the bases \\(G\\).
-    pub fn create<T: RngCore + CryptoRng>(
+    pub fn create<T: CryptoRng>(
         transcript: &mut Transcript,
         rng: &mut T,
         // Commitment to witness
@@ -101,8 +100,8 @@ impl LinearProof {
             let c_L = inner_product(&a_L, &b_R);
             let c_R = inner_product(&a_R, &b_L);
 
-            let s_j = random_scalar(rng);
-            let t_j = random_scalar(rng);
+            let s_j = Scalar::random(rng);
+            let t_j = Scalar::random(rng);
 
             // L = a_L * G_R + s_j * B + c_L * F
             let L = RistrettoPoint::vartime_multiscalar_mul(
@@ -142,8 +141,8 @@ impl LinearProof {
             r = r + x_j * s_j + x_j_inv * t_j;
         }
 
-        let s_star = random_scalar(rng);
-        let t_star = random_scalar(rng);
+        let s_star = Scalar::random(rng);
+        let t_star = Scalar::random(rng);
         let S = (t_star * B + s_star * b[0] * F + s_star * G[0]).compress();
         transcript.append_point(b"S", &S);
 
@@ -160,6 +159,7 @@ impl LinearProof {
         })
     }
 
+    /// Verifies this proof against the commitment, generators, and public scalar vector.
     pub fn verify(
         &self,
         transcript: &mut Transcript,
@@ -410,7 +410,7 @@ mod tests {
     use super::*;
 
     fn test_helper(n: usize) {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         use crate::generators::{BulletproofGens, PedersenGens};
         let bp_gens = BulletproofGens::new(n, 1);
@@ -422,13 +422,13 @@ mod tests {
 
         // a and b are the vectors for which we want to prove c = <a,b>
         // a is a private vector, b is a public vector
-        let a: Vec<_> = (0..n).map(|_| random_scalar(&mut rng)).collect();
-        let b: Vec<_> = (0..n).map(|_| random_scalar(&mut rng)).collect();
+        let a: Vec<_> = (0..n).map(|_| Scalar::random(&mut rng)).collect();
+        let b: Vec<_> = (0..n).map(|_| Scalar::random(&mut rng)).collect();
 
         let mut prover_transcript = Transcript::new(b"linearprooftest");
 
         // C = <a, G> + r * B + <a, b> * F
-        let r = random_scalar(&mut rng);
+        let r = Scalar::random(&mut rng);
         let c = inner_product(&a, &b);
         let C = RistrettoPoint::vartime_multiscalar_mul(
             a.iter().chain(iter::once(&r)).chain(iter::once(&c)),

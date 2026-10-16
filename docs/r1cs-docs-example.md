@@ -67,7 +67,7 @@ use bulletproofs_og::{BulletproofGens, PedersenGens};
 use curve25519_dalek::ristretto::CompressedRistretto;
 use curve25519_dalek::scalar::Scalar;
 use merlin::Transcript;
-use rand::thread_rng;
+use rand::rng;
 
 // Shuffle gadget (documented in markdown file)
 
@@ -148,13 +148,7 @@ For simplicity, in this example the `prove` function does not take a list of bli
 # use curve25519_dalek::ristretto::CompressedRistretto;
 # use curve25519_dalek::scalar::Scalar;
 # use merlin::Transcript;
-# use rand::{thread_rng, CryptoRng, RngCore};
-#
-# fn random_scalar<R: RngCore + CryptoRng>(rng: &mut R) -> Scalar {
-#     let mut bytes = [0u8; 64];
-#     rng.fill_bytes(&mut bytes);
-#     Scalar::from_bytes_mod_order_wide(&bytes)
-# }
+# use rand::rng;
 # 
 # // Shuffle gadget (documented in markdown file)
 # 
@@ -222,17 +216,17 @@ impl ShuffleProof {
 
         // Construct blinding factors using an RNG.
         // Note: a non-example implementation would want to operate on existing commitments.
-        let mut blinding_rng = thread_rng();
+        let mut blinding_rng = rng();
 
         let (input_commitments, input_vars): (Vec<_>, Vec<_>) = input.into_iter()
             .map(|v| {
-                prover.commit(*v, random_scalar(&mut blinding_rng))
+                prover.commit(*v, Scalar::random(&mut blinding_rng))
             })
             .unzip();
 
         let (output_commitments, output_vars): (Vec<_>, Vec<_>) = output.into_iter()
             .map(|v| {
-                prover.commit(*v, random_scalar(&mut blinding_rng))
+                prover.commit(*v, Scalar::random(&mut blinding_rng))
             })
             .unzip();
 
@@ -261,13 +255,7 @@ The verifier receives a proof, and a list of committed inputs and outputs, from 
 # use curve25519_dalek::ristretto::CompressedRistretto;
 # use curve25519_dalek::scalar::Scalar;
 # use merlin::Transcript;
-# use rand::{thread_rng, CryptoRng, RngCore};
-#
-# fn random_scalar<R: RngCore + CryptoRng>(rng: &mut R) -> Scalar {
-#     let mut bytes = [0u8; 64];
-#     rng.fill_bytes(&mut bytes);
-#     Scalar::from_bytes_mod_order_wide(&bytes)
-# }
+# use rand::rng;
 # 
 # // Shuffle gadget (documented in markdown file)
 # 
@@ -335,17 +323,17 @@ The verifier receives a proof, and a list of committed inputs and outputs, from 
 # 
 #         // Construct blinding factors using an RNG.
 #         // Note: a non-example implementation would want to operate on existing commitments.
-#         let mut blinding_rng = thread_rng();
+#         let mut blinding_rng = rng();
 # 
 #         let (input_commitments, input_vars): (Vec<_>, Vec<_>) = input.into_iter()
 #             .map(|v| {
-#                 prover.commit(*v, random_scalar(&mut blinding_rng))
+#                 prover.commit(*v, Scalar::random(&mut blinding_rng))
 #             })
 #             .unzip();
 # 
 #         let (output_commitments, output_vars): (Vec<_>, Vec<_>) = output.into_iter()
 #             .map(|v| {
-#                 prover.commit(*v, random_scalar(&mut blinding_rng))
+#                 prover.commit(*v, Scalar::random(&mut blinding_rng))
 #             })
 #             .unzip();
 #
@@ -407,13 +395,7 @@ Because only the prover knows the scalar values of the inputs and outputs, and t
 # use curve25519_dalek::ristretto::CompressedRistretto;
 # use curve25519_dalek::scalar::Scalar;
 # use merlin::Transcript;
-# use rand::{thread_rng, CryptoRng, RngCore};
-#
-# fn random_scalar<R: RngCore + CryptoRng>(rng: &mut R) -> Scalar {
-#     let mut bytes = [0u8; 64];
-#     rng.fill_bytes(&mut bytes);
-#     Scalar::from_bytes_mod_order_wide(&bytes)
-# }
+# use rand::rng;
 # 
 # // Shuffle gadget (documented in markdown file)
 # 
@@ -481,17 +463,17 @@ Because only the prover knows the scalar values of the inputs and outputs, and t
 # 
 #         // Construct blinding factors using an RNG.
 #         // Note: a non-example implementation would want to operate on existing commitments.
-#         let mut blinding_rng = thread_rng();
+#         let mut blinding_rng = rng();
 # 
 #         let (input_commitments, input_vars): (Vec<_>, Vec<_>) = input.into_iter()
 #             .map(|v| {
-#                 prover.commit(*v, random_scalar(&mut blinding_rng))
+#                 prover.commit(*v, Scalar::random(&mut blinding_rng))
 #             })
 #             .unzip();
 # 
 #         let (output_commitments, output_vars): (Vec<_>, Vec<_>) = output.into_iter()
 #             .map(|v| {
-#                 prover.commit(*v, random_scalar(&mut blinding_rng))
+#                 prover.commit(*v, Scalar::random(&mut blinding_rng))
 #             })
 #             .unzip();
 #
